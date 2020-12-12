@@ -7,6 +7,7 @@ import sys
 class Bugaboo:
     def __init__(self):
         pygame.init()
+        self.kello = pygame.time.Clock()
         self.tilanne = [["Kenttä: ", 1], ["Pisteet: ", 0], ["Elämiä jäljellä: ", 3], ["Liikuta roboa nuolinäppäimin!", ""]]
         self.leveys, self.korkeus, self.alareuna, self.reuna = 800, 500, 80, 30
         self.naytto = pygame.display.set_mode((self.leveys, self.korkeus))
@@ -46,15 +47,19 @@ class Bugaboo:
                         tapahtuma.type = pygame.QUIT
  
                 if tapahtuma.type == pygame.KEYUP:
-                    vasemmalle = False
-                    oikealle = False
-                    alas = False
-                    ylos = False                  
+                    if tapahtuma.key == pygame.K_LEFT:
+                        vasemmalle = False
+                    if tapahtuma.key == pygame.K_RIGHT:
+                        oikealle = False
+                    if tapahtuma.key == pygame.K_DOWN:
+                        alas = False
+                    if tapahtuma.key == pygame.K_UP:
+                        ylos = False                  
  
                 if tapahtuma.type == pygame.QUIT:
                     pygame.display.quit()
                     pygame.quit()
-                    exit()
+                    sys.exit()
 
             #LIIKUTETAAN ROBOA
             if oikealle: 
@@ -73,6 +78,7 @@ class Bugaboo:
             self.liikuta_hirvio()
             self.osuma()
             self.paivita()
+            self.kello.tick(60)
 
 
     def osuma(self):
@@ -93,8 +99,7 @@ class Bugaboo:
         if robo_keskiX+self.kuvat[1].get_width() >= hirvio_keskiX and robo_keskiX-self.kuvat[1].get_width() <= hirvio_keskiX:
             if robo_keskiY+self.kuvat[1].get_height() >=hirvio_keskiY and robo_keskiY-self.kuvat[1].get_height() <= hirvio_keskiY:
                 self.tilanne[2][1] -= 1
-                hX, hY = random.randint(self.reuna, (self.leveys-self.kuvat[1].get_width())), random.randint(self.reuna, (self.korkeus-self.kuvat[1].get_height() - self.alareuna))
-                self.oliot[1] = [hX, hY]       
+                self.check_monsterXY()      
                 return
         #TARKISTETAAN OSUIKO ROBO self.oliot[2]  OVEEN self.oliot[0] -> OVESTA VOI KÄYDÄ VAIN, JOS KAIKKI KOLIKOT ON KERÄTTY
         if len(self.oliot) <= 3:
@@ -140,12 +145,28 @@ class Bugaboo:
         for olio in range(len(self.kuvat)-1):
             x, y = random.randint(self.reuna, (self.leveys-self.kuvat[olio].get_width() - self.reuna)), random.randint(self.reuna, (self.korkeus-self.kuvat[olio].get_height() - self.alareuna))
             self.oliot.append([x, y])
+        self.check_monsterXY()
         #LUODAAN KOLIKOITA 2 + KENTÄN NUMERO
         for i in range(self.tilanne[0][1] + 2):
             kX, kY = random.randint(self.reuna, (self.leveys-self.kuvat[3].get_width() - self.reuna)), random.randint(self.reuna, (self.korkeus - self.kuvat[3].get_height() - self.alareuna))
             self.oliot.append([kX, kY])
             i += 1
 
+    def check_monsterXY(self):
+        x, y = self.oliot[1][0], self.oliot[1][1]
+        #HIRVIÖ EI SAA ILMESTYÄ ROBON SEKTORILLE
+        if self.oliot[2][0] <= self.leveys/2:
+            if self.oliot[2][1] <= self.korkeus/2:
+                x, y = random.randint(self.leveys/2, (self.leveys - self.kuvat[1].get_width() - self.reuna)), random.randint(self.korkeus/2, (self.korkeus - self.kuvat[1].get_height() - self.alareuna))
+            if self.oliot[2][1] > self.korkeus/2:                        
+                x, y = random.randint(self.leveys/2, (self.leveys - self.kuvat[1].get_width() - self.reuna)), random.randint(self.reuna, (self.korkeus/2 - self.kuvat[1].get_height()))
+        if self.oliot[2][0] > self.leveys/2:
+            if self.oliot[2][1] <= self.korkeus/2:
+                x, y = random.randint(self.reuna, (self.leveys/2 - self.kuvat[1].get_width())), random.randint(self.korkeus/2, (self.korkeus - self.kuvat[1].get_height() - self.alareuna))
+            if self.oliot[2][1] > self.korkeus/2:                        
+                x, y = random.randint(self.reuna, (self.leveys/2 - self.kuvat[1].get_width())), random.randint(self.reuna, (self.korkeus/2 - self.kuvat[1].get_height()))
+        self.oliot[1][0] = x
+        self.oliot[1][1] = y        
 
     def liikuta_hirvio(self):
         #HIRVIÖ LIIKKUU EPÄTASAISIN LIIKKEIN JA PELIN EDETESSÄ SE LISÄÄ VAUHTIA
@@ -191,7 +212,7 @@ class Bugaboo:
                     if tapahtuma.key == pygame.K_e or tapahtuma.key == pygame.K_ESCAPE:
                         pygame.display.quit()
                         pygame.quit()
-                        exit()
+                        sys.exit()
 
 
 if __name__ == "__main__":
